@@ -6,14 +6,23 @@ import (
 )
 
 type NestedResponse struct {
-	httpStatusCode int
-	opts           []interface{}
+	httpStatusCode  int
+	opts            []interface{}
+	validationError error
 }
 
-func NewError(httpStatusCode int, opts ...interface{}) *NestedResponse {
+func NewNestedResponse(httpStatusCode int, opts ...interface{}) *NestedResponse {
 	return &NestedResponse{
 		httpStatusCode: httpStatusCode,
 		opts:           opts,
+	}
+}
+
+func NewNestedValidationResponse(httpStatusCode int, err error, opts ...interface{}) *NestedResponse {
+	return &NestedResponse{
+		httpStatusCode:  httpStatusCode,
+		opts:            opts,
+		validationError: err,
 	}
 }
 

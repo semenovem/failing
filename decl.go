@@ -10,7 +10,7 @@ const (
 	unknownText = "unknownText"
 )
 
-type ValidationErrors struct {
+type ValidationError struct {
 	Path    string `json:"path"`
 	Message string `json:"message"`
 }
@@ -18,7 +18,7 @@ type ValidationErrors struct {
 type Response struct {
 	Code             int                    `json:"code"`
 	Message          string                 `json:"message"`
-	ValidationErrors []*ValidationErrors    `json:"validation_errors,omitempty"`
+	ValidationErrors []*ValidationError     `json:"validation_errors,omitempty"`
 	AdditionalFields map[string]interface{} `json:"additional_fields,omitempty"`
 }
 

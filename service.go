@@ -1,7 +1,9 @@
 package failing
 
 import (
+	"fmt"
 	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
@@ -46,12 +48,12 @@ func New(c *Config) *Service {
 // opts, параметры, определяемые по типу:
 // > map[string]interface{} - дополнительные поля
 // > error - ошибка, если isDev = true (dev режим) добавить информацию в доп поля
-// > []ValidationErrors - ошибки валидации
+// > []ValidationError - ошибки валидации
 func (s *Service) NewResponse(c echo.Context, opts ...interface{}) *Response {
 	return s.newResponse(extractLanguage(c), s.parseOpts(opts))
 }
 
-func (s *Service) SendStatusResponse(c echo.Context, httpStatus int, opts ...interface{}) error {
+func (s *Service) SendResponse(c echo.Context, httpStatus int, opts ...interface{}) error {
 	var (
 		lang = extractLanguage(c)
 		opt  = s.parseOpts(opts)
@@ -69,7 +71,7 @@ func (s *Service) SendStatusResponse(c echo.Context, httpStatus int, opts ...int
 }
 
 func (s *Service) SendStatusInternalServerResponse(c echo.Context, err error) error {
-	return s.SendStatusResponse(c, http.StatusInternalServerError, err)
+	return s.SendResponse(c, http.StatusInternalServerError, err)
 }
 
 // SendFromNestedResponse обработка ошибки из вложенных вызовов
@@ -87,7 +89,13 @@ func (s *Service) SendFromNestedResponse(c echo.Context, nestedResp *NestedRespo
 		}
 	}
 
-	return c.JSON(nestedResp.httpStatusCode, s.newResponse(lang, opt))
+	response := s.newResponse(lang, opt)
+
+	if errs, ok := nestedResp.validationError.(validator.ValidationErrors); ok {
+		response.ValidationErrors = s.validationErrors(lang, errs)
+	}
+
+	return c.JSON(nestedResp.httpStatusCode, response)
 }
 
 func (s *Service) newResponse(lang msgLang, opt *parsedOpt) *Response {
@@ -95,19 +103,20 @@ func (s *Service) newResponse(lang msgLang, opt *parsedOpt) *Response {
 		opt.message = unknownMessage
 	}
 
+	txt := opt.message.Text(lang)
+	if len(opt.args) != 0 {
+		txt = fmt.Sprintf(txt, opt.args...)
+	}
+
 	return &Response{
 		Code:             opt.message.Code,
-		Message:          opt.message.Text(lang),
+		Message:          txt,
 		AdditionalFields: opt.additionalFields,
 	}
 }
 
-func (s *Service) MsgEN(key string) string {
+func (s *Service) TextFromMsgKey(key string) string {
 	return s.msg(key, en)
-}
-
-func (s *Service) MsgRU(key string) string {
-	return s.msg(key, ru)
 }
 
 func (s *Service) msg(key string, lang msgLang) string {
@@ -116,12 +125,4 @@ func (s *Service) msg(key string, lang msgLang) string {
 	}
 
 	return unknownMessage.Text(lang)
-}
-
-func (s *Service) getTextFromHTTPStatus(httpStatus int, lang msgLang) string {
-	if st, ok := s.httpStatuses[httpStatus]; ok {
-		return st.Text(lang)
-	}
-
-	return ""
 }

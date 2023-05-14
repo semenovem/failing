@@ -4,13 +4,13 @@ type parsedOpt struct {
 	message          *Message
 	args             Args
 	additionalFields map[string]interface{}
-	err              error
 }
 
 func (s *Service) parseOpts(opts []interface{}) *parsedOpt {
 	var (
 		opt    = &parsedOpt{}
 		msgKey string
+		err    error
 	)
 
 	for _, it := range opts {
@@ -23,15 +23,24 @@ func (s *Service) parseOpts(opts []interface{}) *parsedOpt {
 			opt.additionalFields = val
 
 		case error:
-			opt.err = val
+			if err != nil {
+				s.logger.Errorf("the err is already filled with the value %+v", err)
+			}
+			err = val
 
 		case Args:
+			if opt.args != nil {
+				s.logger.Errorf("the field Args is already filled with the value %+v", opt.args)
+			}
 			opt.args = val
 
 		case string:
 			msgKey = val
 
 		case *Message:
+			if opt.message != nil {
+				s.logger.Errorf("the field Message is already filled with the value %+v", opt.message)
+			}
 			opt.message = val
 
 		case Message:
@@ -56,6 +65,13 @@ func (s *Service) parseOpts(opts []interface{}) *parsedOpt {
 		} else {
 			s.logger.Errorf("failing: simultaneous use of the Message and message Key parameters is not allowed")
 		}
+	}
+
+	if s.isDev && err != nil {
+		if opt.additionalFields == nil {
+			opt.additionalFields = map[string]interface{}{}
+		}
+		opt.additionalFields[errorFieldName] = err.Error()
 	}
 
 	return opt
