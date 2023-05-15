@@ -13,22 +13,26 @@ func (s *Service) SendValidationResponse(c echo.Context, err error) error {
 
 func (s *Service) newValidationResponse(c echo.Context, err error) *Response {
 	var (
-		validationFields []*ValidationError
-		lang             = extractLanguage(c)
+		lang = extractLanguage(c)
+		resp = s.newResponse(lang, &parsedOpt{
+			message: invalidRequestMessage,
+		})
 	)
 
 	if errs, ok := err.(validator.ValidationErrors); ok {
-		validationFields = s.validationErrors(lang, errs)
-		err = nil
-	}
+		resp.ValidationErrors = s.validationErrors(lang, errs)
+	} else {
+		if resp.AdditionalFields == nil {
+			resp.AdditionalFields = make(map[string]interface{})
+		}
 
-	resp := s.NewResponse(c, invalidRequestMessage.DefaultText, validationFields, err)
-	resp.ValidationErrors = validationFields
+		resp.AdditionalFields[fieldNameErr] = err.Error()
+	}
 
 	return resp
 }
 
-func (s *Service) validationErrors(lang msgLang, errs []validator.FieldError) []*ValidationError {
+func (s *Service) validationErrors(lang Lang, errs []validator.FieldError) []*ValidationError {
 	validationErrs := make([]*ValidationError, 0)
 
 	for _, fieldError := range errs {

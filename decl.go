@@ -2,10 +2,10 @@ package failing
 
 const (
 	headerLanguageName = "Accept-Language"
-	errorFieldName     = "__error__" // Имя поля в которое добавляется содержимое ошибки в dev режиме
+	fieldNameErr       = "__error__" // Имя поля в которое добавляется содержимое ошибки в dev режиме
 
-	ru msgLang = "ru-RU"
-	en msgLang = "en-EN"
+	RU Lang = "ru-RU"
+	EN Lang = "en-EN"
 
 	unknownText = "unknownText"
 )
@@ -22,22 +22,22 @@ type Response struct {
 	AdditionalFields map[string]interface{} `json:"additional_fields,omitempty"`
 }
 
-type msgLang string
+type Lang string
 
 var (
 	unknownMessage = &Message{
 		Code:        1000,
 		DefaultText: "Неизвестная ошибка",
-		Translations: map[msgLang]string{
-			en: "Unknown error",
+		Translations: map[Lang]string{
+			EN: "Unknown error",
 		},
 	}
 
 	invalidRequestMessage = &Message{
 		Code:        1001,
 		DefaultText: "Невалидные параметры запроса",
-		Translations: map[msgLang]string{
-			en: "Invalid request parameters",
+		Translations: map[Lang]string{
+			EN: "Invalid request parameters",
 		},
 	}
 )

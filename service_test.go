@@ -18,8 +18,8 @@ func getService() *Service {
 		msgKeyErr1: {
 			Code:        1100,
 			DefaultText: "Текст на русском",
-			Translations: map[msgLang]string{
-				en: "text in english",
+			Translations: map[Lang]string{
+				EN: "text in english",
 			},
 		},
 	}
@@ -31,14 +31,13 @@ func getService() *Service {
 	return New(&Config{
 		IsDevMode:            false,
 		TranslatorDefault:    nil,
-		Translators:          nil,
 		Messages:             messages,
 		ValidationMessageMap: validationMessageMap,
 		Logger:               nil,
 	})
 }
 
-func genEchoRequest(lang msgLang) (echo.Context, *httptest.ResponseRecorder) {
+func genEchoRequest(lang Lang) (echo.Context, *httptest.ResponseRecorder) {
 	ho := echo.New()
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(""))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -62,13 +61,13 @@ func TestServiceNewResponse(t *testing.T) {
 	t.Run("1-unknown", func(t *testing.T) {
 		var (
 			err  = fmt.Errorf("test")
-			c, _ = genEchoRequest(ru)
+			c, _ = genEchoRequest(RU)
 		)
 
 		response := serv.NewResponse(c, err)
 
 		assert.Equal(t, 1000, response.Code)
-		assert.Equal(t, unknownMessage.Text(ru), response.Message)
+		assert.Equal(t, unknownMessage.Text(RU), response.Message)
 		assert.Nil(t, response.AdditionalFields)
 		assert.Nil(t, response.ValidationErrors)
 	})
@@ -76,7 +75,7 @@ func TestServiceNewResponse(t *testing.T) {
 	t.Run("2-ru", func(t *testing.T) {
 		var (
 			err  = fmt.Errorf("test")
-			c, _ = genEchoRequest(ru)
+			c, _ = genEchoRequest(RU)
 		)
 
 		response := serv.NewResponse(c, err, "1100 Текст на русском")
@@ -90,7 +89,7 @@ func TestServiceNewResponse(t *testing.T) {
 	t.Run("2-en", func(t *testing.T) {
 		var (
 			err  = fmt.Errorf("test")
-			c, _ = genEchoRequest(en)
+			c, _ = genEchoRequest(EN)
 		)
 
 		response := serv.NewResponse(c, err, "1100 Текст на русском")
@@ -104,7 +103,7 @@ func TestServiceNewResponse(t *testing.T) {
 	t.Run("2-en-dev", func(t *testing.T) {
 		var (
 			err  = fmt.Errorf("test")
-			c, _ = genEchoRequest(en)
+			c, _ = genEchoRequest(EN)
 		)
 
 		response := servDev.NewResponse(c, err, "1100 Текст на русском")
@@ -124,10 +123,10 @@ func TestService_newResponse(t *testing.T) {
 	var serv = getService()
 
 	t.Run("1", func(t *testing.T) {
-		response := serv.newResponse(ru, &parsedOpt{})
+		response := serv.newResponse(RU, &parsedOpt{})
 
 		assert.Equal(t, 1000, response.Code)
-		assert.Equal(t, unknownMessage.Text(ru), response.Message)
+		assert.Equal(t, unknownMessage.Text(RU), response.Message)
 		assert.Nil(t, response.AdditionalFields)
 		assert.Nil(t, response.AdditionalFields)
 	})
@@ -137,8 +136,8 @@ func TestService_newResponse(t *testing.T) {
 			msg = Message{
 				Code:        3545,
 				DefaultText: "фыфывафывафываыва %v",
-				Translations: map[msgLang]string{
-					en: "asdfasfdasdfasdfas %v",
+				Translations: map[Lang]string{
+					EN: "asdfasfdasdfasdfas %v",
 				},
 			}
 
@@ -150,7 +149,7 @@ func TestService_newResponse(t *testing.T) {
 				},
 			}
 
-			response = serv.newResponse(ru, &opt)
+			response = serv.newResponse(RU, &opt)
 		)
 
 		assert.Equal(t, 3545, response.Code)
@@ -166,8 +165,8 @@ func TestService_newResponse(t *testing.T) {
 			msg = Message{
 				Code:        3545,
 				DefaultText: "фыфывафывафываыва %v",
-				Translations: map[msgLang]string{
-					en: "asdfasfdasdfasdfas %v",
+				Translations: map[Lang]string{
+					EN: "asdfasfdasdfasdfas %v",
 				},
 			}
 
@@ -179,7 +178,7 @@ func TestService_newResponse(t *testing.T) {
 				},
 			}
 
-			response = serv.newResponse(en, &opt)
+			response = serv.newResponse(EN, &opt)
 		)
 
 		assert.Equal(t, 3545, response.Code)

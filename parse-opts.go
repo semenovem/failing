@@ -71,7 +71,7 @@ func (s *Service) parseOpts(opts []interface{}) *parsedOpt {
 		if opt.additionalFields == nil {
 			opt.additionalFields = map[string]interface{}{}
 		}
-		opt.additionalFields[errorFieldName] = err.Error()
+		opt.additionalFields[fieldNameErr] = err.Error()
 	}
 
 	return opt

@@ -11,7 +11,7 @@ import (
 type Config struct {
 	IsDevMode            bool // Режим разработки
 	TranslatorDefault    ut.Translator
-	Translators          map[msgLang]ut.Translator
+	Translators          map[Lang]ut.Translator
 	Messages             map[string]*Message
 	ValidationMessageMap map[string]string
 	Logger               logger
@@ -20,7 +20,6 @@ type Config struct {
 
 type Service struct {
 	translatorDefault    ut.Translator
-	translators          map[msgLang]ut.Translator
 	isDev                bool
 	messages             map[string]*Message
 	validationMessageMap map[string]string
@@ -31,10 +30,10 @@ type Service struct {
 func New(c *Config) *Service {
 	s := &Service{
 		translatorDefault:    c.TranslatorDefault,
-		translators:          c.Translators,
 		isDev:                c.IsDevMode,
 		messages:             c.Messages,
 		validationMessageMap: c.ValidationMessageMap,
+		logger:               c.Logger,
 	}
 
 	if c.HTTPStatuses == nil {
@@ -70,19 +69,28 @@ func (s *Service) SendResponse(c echo.Context, httpStatus int, opts ...interface
 	return c.JSON(httpStatus, s.newResponse(lang, opt))
 }
 
-func (s *Service) SendStatusInternalServerResponse(c echo.Context, err error) error {
+func (s *Service) SendInternalServerResponse(c echo.Context, err error) error {
 	return s.SendResponse(c, http.StatusInternalServerError, err)
 }
 
 // SendFromNestedResponse обработка ошибки из вложенных вызовов
-func (s *Service) SendFromNestedResponse(c echo.Context, nestedResp *NestedResponse) error {
+func (s *Service) SendFromNestedResponse(c echo.Context, nestedResp Nested) error {
 	var (
-		lang = extractLanguage(c)
-		opt  = s.parseOpts(nestedResp.opts)
+		lang             = extractLanguage(c)
+		opt              = s.parseOpts(nestedResp.getOpts())
+		validationErrors []*ValidationError
+		validationErr    = nestedResp.getValidationErr()
 	)
 
+	if validationErr != nil {
+		if errs, ok := validationErr.(validator.ValidationErrors); ok {
+			validationErrors = s.validationErrors(lang, errs)
+			opt.message = invalidRequestMessage
+		}
+	}
+
 	if opt.message == nil {
-		if st, ok := s.httpStatuses[nestedResp.httpStatusCode]; ok {
+		if st, ok := s.httpStatuses[nestedResp.getHTTPStatusCode()]; ok {
 			opt.message = st
 		} else {
 			opt.message = unknownMessage
@@ -91,14 +99,14 @@ func (s *Service) SendFromNestedResponse(c echo.Context, nestedResp *NestedRespo
 
 	response := s.newResponse(lang, opt)
 
-	if errs, ok := nestedResp.validationError.(validator.ValidationErrors); ok {
-		response.ValidationErrors = s.validationErrors(lang, errs)
+	if len(validationErrors) != 0 {
+		response.ValidationErrors = validationErrors
 	}
 
-	return c.JSON(nestedResp.httpStatusCode, response)
+	return c.JSON(nestedResp.getHTTPStatusCode(), response)
 }
 
-func (s *Service) newResponse(lang msgLang, opt *parsedOpt) *Response {
+func (s *Service) newResponse(lang Lang, opt *parsedOpt) *Response {
 	if opt.message == nil {
 		opt.message = unknownMessage
 	}
@@ -116,10 +124,10 @@ func (s *Service) newResponse(lang msgLang, opt *parsedOpt) *Response {
 }
 
 func (s *Service) TextFromMsgKey(key string) string {
-	return s.msg(key, en)
+	return s.msg(key, EN)
 }
 
-func (s *Service) msg(key string, lang msgLang) string {
+func (s *Service) msg(key string, lang Lang) string {
 	if msg, ok := s.messages[key]; ok {
 		msg.Text(lang)
 	}

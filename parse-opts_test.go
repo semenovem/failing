@@ -22,7 +22,7 @@ func Test_parseOpts(t *testing.T) {
 			msgKey: {
 				Code:         4002,
 				DefaultText:  "Дефолтный текст",
-				Translations: map[msgLang]string{en: "english_text"},
+				Translations: map[Lang]string{EN: "english_text"},
 			},
 		},
 		logger: &testLogger{},
@@ -33,7 +33,7 @@ func Test_parseOpts(t *testing.T) {
 			msgKey: {
 				Code:         4002,
 				DefaultText:  "Дефолтный текст",
-				Translations: map[msgLang]string{en: "english_text"},
+				Translations: map[Lang]string{EN: "english_text"},
 			},
 		},
 		logger: &testLogger{},
@@ -83,19 +83,19 @@ func Test_parseOpts(t *testing.T) {
 		message := Message{
 			Code:         5006,
 			DefaultText:  "Дефолтный текст2",
-			Translations: map[msgLang]string{en: "english2"},
+			Translations: map[Lang]string{EN: "english2"},
 		}
 
 		assert.Equal(t, &Message{
 			Code:         5006,
 			DefaultText:  "Дефолтный текст2",
-			Translations: map[msgLang]string{en: "english2"},
+			Translations: map[Lang]string{EN: "english2"},
 		}, serv.parseOpts([]interface{}{message}).message)
 
 		assert.Equal(t, &Message{
 			Code:         5006,
 			DefaultText:  "Дефолтный текст2",
-			Translations: map[msgLang]string{en: "english2"},
+			Translations: map[Lang]string{EN: "english2"},
 		}, servDev.parseOpts([]interface{}{message}).message)
 	})
 
@@ -103,13 +103,13 @@ func Test_parseOpts(t *testing.T) {
 		assert.Equal(t, &Message{
 			Code:         4002,
 			DefaultText:  "Дефолтный текст",
-			Translations: map[msgLang]string{en: "english_text"},
+			Translations: map[Lang]string{EN: "english_text"},
 		}, serv.parseOpts([]interface{}{msgKey}).message)
 
 		assert.Equal(t, &Message{
 			Code:         4002,
 			DefaultText:  "Дефолтный текст",
-			Translations: map[msgLang]string{en: "english_text"},
+			Translations: map[Lang]string{EN: "english_text"},
 		}, servDev.parseOpts([]interface{}{msgKey}).message)
 	})
 }

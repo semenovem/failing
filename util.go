@@ -16,6 +16,6 @@ func toSnakeCase(str string) string {
 	return strings.ToLower(snake)
 }
 
-func extractLanguage(c echo.Context) msgLang {
-	return msgLang(c.Request().Header.Get(headerLanguageName))
+func extractLanguage(c echo.Context) Lang {
+	return Lang(c.Request().Header.Get(headerLanguageName))
 }
